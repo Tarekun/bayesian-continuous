@@ -42,16 +42,21 @@ def train_hill_climbing(data: pd.DataFrame) -> TrainingResult:
     return TrainingResult(edges=edges, elapsed_s=elapsed)
 
 
-def train_fges(data: pd.DataFrame) -> TrainingResult:
+def train_fges(data: pd.DataFrame, **kwargs) -> TrainingResult:
     """Learn a DAG structure using Greedy Equivalence Search / FGES (gcastle).
 
     Uses gcastle's GES implementation (Chickering, 2002; Ramsey et al., 2017).
     GES searches over CPDAGs, so some edge orientations may be undetermined by
     the data; the returned edges reflect the orientations present in the output.
+
+    Keyword arguments are forwarded to ``castle.algorithms.GES``
+    (e.g. ``criterion``, ``method``).
+    For continuous data only ``criterion='bic'`` is supported; within BIC,
+    ``method`` selects the scoring variant (``'scatter'`` or ``'r2'``).
     """
 
     def _learn(data):
-        model = GES()
+        model = GES(**kwargs)
         model.learn(data.to_numpy())
         return _adj_to_edges(model.causal_matrix, list(data.columns))
 
@@ -59,17 +64,36 @@ def train_fges(data: pd.DataFrame) -> TrainingResult:
     return TrainingResult(edges=edges, elapsed_s=elapsed)
 
 
-def train_pc(data: pd.DataFrame) -> TrainingResult:
+def train_pc(
+    data: pd.DataFrame,
+    ci_test: str = "pearsonr",
+    significance_level: float = 0.05,
+    max_cond_vars: int | None = None,
+) -> TrainingResult:
     """Learn a DAG structure using the PC algorithm (pgmpy).
 
-    Uses partial correlation (pearsonr) as the CI test, appropriate for
-    continuous Gaussian data. Returns only the directed edges from the
-    learned PDAG; undirected edges (where orientation is not identifiable
-    from the data) are excluded.
+    Args:
+        data:               Training dataset.
+        ci_test:            Conditional independence test to use
+                            (e.g. ``"pearsonr"``, ``"chi_square"``, ``"g_sq"``).
+        significance_level: Alpha threshold for the CI tests (default 0.05).
+        max_cond_vars:      Maximum size of the conditioning set. ``None``
+                            imposes no limit (full PC skeleton phase).
+
+    Returns only the directed edges from the learned PDAG; undirected edges
+    (where orientation is not identifiable from the data) are excluded.
     """
 
     def _learn(data):
-        model = PC(ci_test="pearsonr", return_type="pdag", show_progress=False)
+        kwargs = dict(
+            ci_test=ci_test,
+            significance_level=significance_level,
+            return_type="pdag",
+            show_progress=False,
+        )
+        if max_cond_vars is not None:
+            kwargs["max_cond_vars"] = max_cond_vars
+        model = PC(**kwargs)
         model.fit(data)
         return set(model.causal_graph_.edges())
 
