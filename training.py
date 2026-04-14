@@ -31,8 +31,6 @@ def _adj_to_edges(causal_matrix, columns: list[str]) -> set[tuple[str, str]]:
 
 
 def train_hill_climbing(data: pd.DataFrame) -> TrainingResult:
-    """Learn a DAG structure using Hill Climbing with BIC-Gaussian scoring (pgmpy)."""
-
     def _learn(data):
         estimator = HillClimbSearch(data)
         dag = estimator.estimate(scoring_method="bic-g")
@@ -42,21 +40,21 @@ def train_hill_climbing(data: pd.DataFrame) -> TrainingResult:
     return TrainingResult(edges=edges, elapsed_s=elapsed)
 
 
-def train_fges(data: pd.DataFrame, **kwargs) -> TrainingResult:
-    """Learn a DAG structure using Greedy Equivalence Search / FGES (gcastle).
-
-    Uses gcastle's GES implementation (Chickering, 2002; Ramsey et al., 2017).
-    GES searches over CPDAGs, so some edge orientations may be undetermined by
-    the data; the returned edges reflect the orientations present in the output.
-
-    Keyword arguments are forwarded to ``castle.algorithms.GES``
-    (e.g. ``criterion``, ``method``).
-    For continuous data only ``criterion='bic'`` is supported; within BIC,
-    ``method`` selects the scoring variant (``'scatter'`` or ``'r2'``).
-    """
-
+def train_fges(
+    data: pd.DataFrame,
+    # GES parameters
+    criterion: str = "bic",
+    method: str = "scatter",
+    k: float = 0.001,
+    N: int = 10,
+) -> TrainingResult:
     def _learn(data):
-        model = GES(**kwargs)
+        model = GES(
+            criterion=criterion,
+            method=method,
+            k=k,
+            N=N,
+        )
         model.learn(data.to_numpy())
         return _adj_to_edges(model.causal_matrix, list(data.columns))
 
@@ -66,24 +64,11 @@ def train_fges(data: pd.DataFrame, **kwargs) -> TrainingResult:
 
 def train_pc(
     data: pd.DataFrame,
+    # PC parameters
     ci_test: str = "pearsonr",
-    significance_level: float = 0.05,
+    significance_level: float = 0.01,
     max_cond_vars: int | None = None,
 ) -> TrainingResult:
-    """Learn a DAG structure using the PC algorithm (pgmpy).
-
-    Args:
-        data:               Training dataset.
-        ci_test:            Conditional independence test to use
-                            (e.g. ``"pearsonr"``, ``"chi_square"``, ``"g_sq"``).
-        significance_level: Alpha threshold for the CI tests (default 0.05).
-        max_cond_vars:      Maximum size of the conditioning set. ``None``
-                            imposes no limit (full PC skeleton phase).
-
-    Returns only the directed edges from the learned PDAG; undirected edges
-    (where orientation is not identifiable from the data) are excluded.
-    """
-
     def _learn(data):
         kwargs = dict(
             ci_test=ci_test,
@@ -101,15 +86,25 @@ def train_pc(
     return TrainingResult(edges=edges, elapsed_s=elapsed)
 
 
-def train_notears(data: pd.DataFrame, **kwargs) -> TrainingResult:
-    """Learn a DAG structure using NOTEARS (gcastle).
-
-    Keyword arguments are forwarded to ``castle.algorithms.Notears``
-    (e.g. ``lambda1``, ``w_threshold``, ``max_iter``, ``h_tol``, ``rho_max``).
-    """
-
+def train_notears(
+    data: pd.DataFrame,
+    # NOTEARS parameters
+    lambda1: float = 0.1,
+    loss_type: str = "l2",
+    max_iter: int = 100,
+    h_tol: float = 1e-8,
+    rho_max: float = 10000000000000000,
+    w_threshold: float = 0.3,
+) -> TrainingResult:
     def _learn(data):
-        model = Notears(**kwargs)
+        model = Notears(
+            lambda1=lambda1,
+            loss_type=loss_type,
+            max_iter=max_iter,
+            h_tol=h_tol,
+            rho_max=rho_max,
+            w_threshold=w_threshold,
+        )
         model.learn(data.to_numpy())
         return _adj_to_edges(model.causal_matrix, list(data.columns))
 
