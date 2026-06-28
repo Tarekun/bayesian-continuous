@@ -111,19 +111,17 @@ def _sample_from_dag(
 _SACHS_DIR = Path(__file__).parent / "datasets" / "sachs"
 
 
-def load_sachs_data() -> pd.DataFrame:
-    """Load the Sachs et al. (2005) protein signaling dataset."""
+def load_sachs() -> tuple[pd.DataFrame, nx.DiGraph]:
+    """Load the Sachs et al. (2005) protein signaling dataset and GT graph"""
 
+    # dataset loading
     data_dir = _SACHS_DIR / "Data Files"
     frames = [pd.read_csv(f) for f in sorted(data_dir.glob("*.csv"))]
-    return pd.concat(frames, ignore_index=True)
-
-
-def load_sachs_ground_truth() -> nx.DiGraph:
-    """Load the Sachs et al. (2005) ground-truth causal network."""
-
+    df = pd.concat(frames, ignore_index=True)
+    # graph loading
     gt_df = pd.read_csv(_SACHS_DIR / "GroundTruth.csv")
     dag = nx.DiGraph()
     for _, row in gt_df.iterrows():
         dag.add_edge(row["from"], row["to"])
-    return dag
+
+    return df, dag
