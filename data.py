@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import networkx as nx
@@ -10,9 +12,6 @@ def build_random_dag(
     n_nodes: int, edge_prob: float = 0.3, seed: int | None = None
 ) -> nx.DiGraph:
     """Build a random DAG over ``n_nodes`` ordered nodes.
-
-    Edges are only added from lower-indexed nodes to higher-indexed ones,
-    which guarantees acyclicity by construction.
 
     Args:
         n_nodes: Number of nodes. Nodes are named ``X0, X1, ..., X{n-1}``.
@@ -107,3 +106,24 @@ def _sample_from_dag(
             values[node] = noise
 
     return pd.DataFrame(values, columns=nodes)
+
+
+_SACHS_DIR = Path(__file__).parent / "datasets" / "sachs"
+
+
+def load_sachs_data() -> pd.DataFrame:
+    """Load the Sachs et al. (2005) protein signaling dataset."""
+
+    data_dir = _SACHS_DIR / "Data Files"
+    frames = [pd.read_csv(f) for f in sorted(data_dir.glob("*.csv"))]
+    return pd.concat(frames, ignore_index=True)
+
+
+def load_sachs_ground_truth() -> nx.DiGraph:
+    """Load the Sachs et al. (2005) ground-truth causal network."""
+
+    gt_df = pd.read_csv(_SACHS_DIR / "GroundTruth.csv")
+    dag = nx.DiGraph()
+    for _, row in gt_df.iterrows():
+        dag.add_edge(row["from"], row["to"])
+    return dag
