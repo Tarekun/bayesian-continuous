@@ -15,6 +15,9 @@ class TrainingResult:
 
 
 def _timed(fn, *args, **kwargs) -> tuple:
+    """Runs `fn` on `*args,**kwargs` timing how long it takes.
+    Returns a tuple containing (result, time)"""
+
     t0 = time.perf_counter()
     result = fn(*args, **kwargs)
     return result, time.perf_counter() - t0
@@ -117,6 +120,8 @@ def learn_dag(
     algorithm: Literal["hill_climbing", "pc", "fges", "notears"],
     **kwargs,
 ) -> TrainingResult:
+    """Generic entrypoint to learn a Bayesian network using one of the supported algorithms"""
+
     dispatch: dict[str, callable] = {
         "hill_climbing": train_hill_climbing,
         "pc": train_pc,
