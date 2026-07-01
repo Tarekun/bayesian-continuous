@@ -1,4 +1,4 @@
-from castle.algorithms import Notears, GES
+from castle.algorithms import Notears, GES, DAG_GNN
 from dataclasses import dataclass
 import itertools
 import networkx as nx
@@ -118,9 +118,40 @@ def train_notears(
     return TrainingResult(edges=edges, elapsed_s=elapsed)
 
 
+def train_daggnn(
+    data: pd.DataFrame,
+    # DAG-GNN parameters
+    mlp_dimension: int = 64,  # size of both enconder and decoder MLPs
+    epochs: int = 300,  # number of epochs to train
+    lr: float = 0.003,  # learning reate
+    h_tolerance: float = 1e-8,  # tolerance to keep an edge
+    seed: int = 42,
+    graph_threshold: float = 0.3,
+    tau_a: float = 0,
+    k_max_iter: float = 100,
+) -> TrainingResult:
+    def _learn(data):
+        model = DAG_GNN(
+            encoder_hidden=mlp_dimension,
+            decoder_hidden=mlp_dimension,
+            epochs=epochs,
+            lr=lr,
+            # tau_a=tau_a,
+            h_tolerance=h_tolerance,
+            device_type="gpu",
+            seed=seed,
+            graph_threshold=graph_threshold,
+        )
+        model.learn(data.to_numpy())
+        return _adj_to_edges(model.causal_matrix, list(data.columns))
+
+    edges, elapsed = _timed(_learn, data)
+    return TrainingResult(edges=edges, elapsed_s=elapsed)
+
+
 def learn_dag(
     data: pd.DataFrame,
-    algorithm: Literal["hill_climbing", "pc", "fges", "notears"],
+    algorithm: Literal["hill_climbing", "pc", "fges", "notears", "daggnn"],
     **kwargs,
 ) -> TrainingResult:
     """Generic entrypoint to learn a Bayesian network using one of the supported algorithms"""
@@ -130,6 +161,7 @@ def learn_dag(
         "pc": train_pc,
         "fges": train_fges,
         "notears": train_notears,
+        "daggnn": train_daggnn,
     }
     if algorithm not in dispatch:
         raise ValueError(
