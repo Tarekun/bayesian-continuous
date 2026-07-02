@@ -7,3 +7,5 @@ __pycache__/
 uv.lock
 
 datasets
+report/main.aux
+report/main.log
