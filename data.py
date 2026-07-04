@@ -132,9 +132,11 @@ def load_sachs() -> tuple[pd.DataFrame, nx.DiGraph]:
 def _encode_categorical(df: pd.DataFrame) -> pd.DataFrame:
     """Convert string/categorical columns to integer codes."""
     return df.apply(
-        lambda col: pd.Categorical(col).codes.astype(float)
-        if not pd.api.types.is_numeric_dtype(col)
-        else col
+        lambda col: (
+            pd.Categorical(col).codes.astype(float)
+            if not pd.api.types.is_numeric_dtype(col)
+            else col
+        )
     )
 
 
@@ -156,6 +158,20 @@ def load_child(n_samples: int, seed: int) -> tuple[pd.DataFrame, nx.DiGraph]:
     """Load the Child BIF model and sample a dataset from it"""
 
     model = BIFReader("datasets/bnlearn/child.bif").get_model()
+    df = BayesianModelSampling(model).forward_sample(size=n_samples, seed=seed)
+    df = _encode_categorical(df)
+
+    dag = nx.DiGraph()
+    dag.add_nodes_from(model.nodes())
+    dag.add_edges_from(model.edges())
+
+    return df, dag
+
+
+def load_alarm(n_samples: int, seed: int) -> tuple[pd.DataFrame, nx.DiGraph]:
+    """Load the ALARM model and sample a dataset from it"""
+
+    model = BIFReader("datasets/bnlearn/alarm.bif").get_model()
     df = BayesianModelSampling(model).forward_sample(size=n_samples, seed=seed)
     df = _encode_categorical(df)
 
