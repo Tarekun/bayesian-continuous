@@ -31,16 +31,8 @@ danieletarek.iaisy@studio.unibo.it
 \maketitle
 
 
-% \attention{DO NOT MODIFY THIS TEMPLATE - EXCEPT, OF COURSE FOR TITLE AND AUTHORS. REMOVE THE \texttt{guidelines} OPTION FROM  \texttt{$\backslash$usepackage[guidelines]\{faikrmod3\}} IN THE \LaTeX\ SOURCE IN THE FINAL VERSION.}
-
 \begin{abstract}
 \begin{quote}
-
-% \explanation{
-% This mini-project aims to ... \\
-% We use ... \\
-% We found that ...
-% }
 Learning the structure of a Bayesian Network, represented as a Directed Acyclic Graph (DAG),
 is a computationally challenging task due to the combinatorial nature of the search space
 and strict acyclicity constraints. Continuous numerical optimization has emerged as a
@@ -72,8 +64,9 @@ Continuous numerical optimization techniques can be a viable option to speed up 
 The main objective of this study is to understand how novel techniques based on numerical 
 optimization work compared against more traiditional approaches, both in terms of the fidelity
 of the learned network and in terms of resources necessary to run each training algorithm.\\
-To do so, we investigate the NOTEARS algorithm (TODO reference) and the DAG-GNN algorithm (TODO)
-compared to the classical algorithms PC, FGES, and hill climbing. We selected NOTEARS because
+To do so, we investigate the NOTEARS algorithm \cite{zheng2018dags} and the DAG-GNN algorithm
+\cite{yu2019daggnn} compared to the classical algorithms PC \cite{spirtes1991pc},
+FGES \cite{ramsey2017fges}, and hill climbing \cite{heckerman1995learning}. We selected NOTEARS because
 it is the pioneering work that first transformed DAG structure learning from an intractable
 combinatorial search into a purely continuous optimization problem. It works by introducing a
 smooth, exact algebraic characterization of the acyclicity constraint 
@@ -85,38 +78,18 @@ a GNN-parameterized Variational Autoencoder (VAE) to capture the underlying data
 alongside a polynomial variant of the continuous acyclicity constraint. We included DAG-GNN
 to investigate another approach in this space on top of NOTEARS and specifically because
 the use of GNN-parametrized VAE seems a natural fit for the task of DAG learning.
-% \explanation{
-% Explain the purpose of your project: what do you intend to observe/try/experience/\dots? \\
-% \begin{itemize}
-%     \item 
-% Example: the purpose of this project is to implement part of the Bayesian network described in \cite{10.1371/journal.pone.0220065} and experiment with concepts seen in class \\
-% %
-% \item Another example: our aim was to experiment the effect of discretization of continuous variables \\
-% %
-% \item Yet another example: we are interested in comparing the run-time and error of approximate inference under different conditions
-% %
-% \item One final example: we studied \textit{value of information}: something mentioned in class but not covered in this module, which sparked our interest.
-% \end{itemize}
-% }
 
 \subsection{Method}
 What we want to test is structure learning, how good an algorithm can recover the original Bayesian
 network representing the probability distribution from data sampled from said distribution. To do
 so we need a ground truth network to compare against the one constructed from our learning algorithm.
-The blearn library (todo reference https://www.bnlearn.com/bnrepository/) contains a repository of 
-prebuilt Bayesian networks that can be used to generate a synthetic dataset, with DAGs ranging from 
-just 5 variables to 1041. To avoid only using synthetic data we also tested on the protein folding
-dataset introduced in (TODO cite Sachs et al.) which contains a DAG with 11 nodes and a dataset of
+The bnlearn repository \cite{scutari2010bnlearn} contains a repository of
+prebuilt Bayesian networks that can be used to generate a synthetic dataset, with DAGs ranging from
+just 5 variables to 1041. To avoid only using synthetic data we also tested on the protein signaling
+dataset introduced in \cite{sachs2005causal} which contains a DAG with 11 nodes and a dataset of
 11672 real samples. The full experiment covers 4 networks with node count ranging from 5 to 37.\\
 For each experiment, we report the performance metric of the learned graph, main one being the SHD,
 and the execution time of the algorithm to learn the output graph.\\
-% \explanation{
-% Describe the methodology you followed
-% \begin{itemize}
-%     \item 
-% Example: we used pgmpy library methods\footnote{This is just an example: indeed, it is NOT necessary to use pgmpy; the coding language doesn't have to be python either. Feel free to use whatever software framework suits your needs.} to implement our network and run queries. To understand if differences in models, queries, parameters or number of samples induced differences in accuracy, we varied evidence nodes, conditional probability distributions, inference method, ...
-% \end{itemize}
-% }
 
 \subsection{Results}
 NOTEARS appears to be the winner as it usually recovered the best DAGs among all of the tested
@@ -125,43 +98,25 @@ performed worse than NOTEARS and sometimes worse than classical methods, while b
 costly to run. These approaches are not particularly affected by an increase in variable count,
 and scale well along this dimension, while being much more sensitive to sample count in the 
 dataset used, something that classical methods do not suffer particularly.
-% \explanation{
-% In a few lines: what are the most noteworthy results you have observed or things you have learned/understood from this project? (only the highlights: there will be a dedicated paragraph for presenting results in the Analysis section)
-% }
+
 
 \section{Model}
 Many of the Bayesian network tested for this study come from the bnlearn repository of networks.
 Specifically, we used the CANCER composed of 5 variables, the CHILD composed of 20 variables,
 and the ALARM one composed of 37 variables. All of these network include discrete variables
-only. For more details on the networks we refer the reader to the website: TODO.\\
-In addition to these discrete benchmarks, we evaluate algorithms on a real-world continuous 
+only. For more details on the networks we refer the reader to the bnlearn repository \cite{scutari2010bnlearn}.\\
+In addition to these discrete benchmarks, we evaluate algorithms on a real-world continuous
 dataset introduced by Sachs et al. \cite{sachs2005causal}, derived from single-cell flow 
 cytometry measurements. The ground truth network consists of 11 continuous variables 
 representing signaling proteins, connected by 17 high-confidence directed arcs.
-% \explanation{
-% Insert a picture of your Bayesian network(s) (Figure~\ref{fig:network})
-% %
-% \begin{figure}
-%     \centering
-%     \includegraphics[scale=1.0]{F2.png}
-%     \caption{Bayesian network. Image taken from \url{https://www.intechopen.com/chapters/62844}}
-%     \label{fig:network}
-% \end{figure}
-% }
-% \explanation{
-% Explain the following aspects of your model (if there is too much to say and not enough space, put in your notebook whatever does not fit here):
-% \begin{itemize}
-%     \item nodes: if not self-explanatory, explain each random variable's meaning/intuition and type/range
-%     \item conditional distributions (for example, the CPTs, some or all of them)
-%     \item the procedure you followed to build your model (structure and conditional distributions): from reference paper? by analyzing the domain? learned from data? just assigned probability distributions arbitrarily? followed a particular methodology for building the network? ...
-% \end{itemize}  
-% In general, only write whatever is relevant and necessary to understand the rest of the report. Do not explain concepts seen in class or explained in textbooks. Do not describe models taken from textbook/literature/tutorials/libraries, like (for example) the Asia network. Instead, if you are using a model as-is: just insert a reference or URL\footnote{\url{https://www.bnlearn.com/bnrepository/}.}
-% }
 
 
 \section{Analysis}
 
 \subsection{Experimental setup}
+NOTEARS, DAG-GNN, and FGES are run using the implementations provided by the gcastle
+Python toolbox \cite{zhang2021gcastle}, while PC and Hill Climbing are run using the
+implementations provided by the pgmpy library \cite{ankan2015pgmpy}.\\
 The objective is to perform analysis on what algorithm performs best in recoverint the original DAG, so
 for each dataset we run the algorithm and check how good the learned DAG is. Each algorithm has its own
 hyper-parameters and a optimal combination of hyper-parameter on one dataset might not be optimal for a
@@ -172,14 +127,12 @@ computing graph reconstruction metrics, along with execution time of the algorit
 metric is SHD (Structural Hamming Distance), which measures how many edge addition, deletion, or
 edge inversion needs to be performed on a graph to transform it into the other (lower means better).\\
 To investigate the performances at varying scales we selected the CANCER (5 nodes), CHILD (20 nodes),
-and ALARM (37 nodes) networks from the bnlearn repository and generated a synthetic dataset of 1000
-samples for these. We also used the (TODO cite Sachs et al) dataset, containing 11 nodes and 11672
-real samples. We also note that in the preliminary phase the BARLEY graph from the bnlearn repository
+and ALARM (37 nodes) networks from the bnlearn repository \cite{scutari2010bnlearn} and generated a
+synthetic dataset of 1000 samples for these. We also used the Sachs et al. \cite{sachs2005causal}
+dataset, containing 11 nodes and 11672 real samples. We also note that in the preliminary phase the
+BARLEY graph from the bnlearn repository
 was tested, but ultimately discarded because all of the classical algorithms took extremely long to
 train on it.
-% \explanation{
-% Briefly describe the probability queries or other experiments that you have carried out. Describe how you plan to evaluate the results (for example: are there results that you would expect?)
-% }
 
 \subsection{Results}
 On very small datasets NOTEARS and DAG-GNN do not appear to be helpful compared to classical
@@ -197,7 +150,14 @@ took prohibitively long on the BARLEY dataset (48 nodes) leading to its removal 
 On the other hand, their scaling w.r.t. the dataset size is much less favourable: Hill climbing, PC,
 and FGES all take roughly the same amount of time on the Sachs et al. dataset that it took them on
 the CHILD one, despite having roughly 10 times more samples; NOTEARS instead took roughly 20 times
-more time to terminate and DAG-GNN took 16 times. Table 1 contains the performance of each algorithm
+more time to terminate and DAG-GNN took 16 times.
+DAG-GNN was tested because it seemed a natural fit to the problem: we are trying to learn a DAG
+and its architechture uses a Graph Neural Network under the hood. Despite this fact in none of the
+tested networks it was able to outperform NOTEARS, despites still beating classical algorithms
+except for the simplest case of the CANCER dataset. It is still believable that it could beat
+NOTEARS as the network becomes bigger and the relationships between variables more complex, but this
+investigation is left as future work.\\
+Table 1 contains the performance of each algorithm
 on each dataset, along with averaged metrics across all datasets.
 
 \begin{table*}[t]
@@ -247,20 +207,6 @@ Dataset & Algorithm & Time (s) & SHD & nSHD & Accuracy & Precision & Recall & F1
 \end{tabular}
 \end{table*}
 
-DAG-GNN was tested because it seemed a natural fit to the problem: we are trying to learn a DAG
-and its architechture uses a Graph Neural Network under the hood. Despite this fact in none of the
-tested networks it was able to outperform NOTEARS, despites still beating classical algorithms
-except for the simplest case of the CANCER dataset. It is still believable that it could beat
-NOTEARS as the network becomes bigger and the relationships between variables more complex, but this
-investigation is left as future work.
-% \explanation{
-% What did you observe? \\
-% %
-% All according to expectations? \\
-% %
-% Anything surprising or worthwhile mentioning?
-% }
-
 
 \section{Conclusion}
 In conclusion, this study highlights a distinct trade-off between continuous optimization and
@@ -275,27 +221,10 @@ to moderately sized graphs, alongside the observed sensitivity of continuous sol
 sample sizes. Future work should therefore focus on optimizing continuous methods for larger
 datasets and evaluating these advanced graph-based models on substantially more complex networks
 to determine if their representational advantages ultimately manifest at a much larger scale.
-% \explanation{
-% Just one paragraph: what you have learned, anything interesting that came up, what are the limitations of your model/experiments/study/...
-% }
 
-
-\section{Links to external resources}
-\explanation{
-Optionally, insert here:
-\begin{itemize}
-    \item a link to your GitHub or any other public repo where one can find your code (only if you did not submit your code on Virtuale) 
-    \item a link to your dataset (only if you have used a dataset, for example, for learning network parameters or structure)
-\end{itemize}
-Leave this section empty if you have all your resources in Virtuale. \textbf{Do not insert code/outputs in this report}.
-}
-\bigskip
 
 \bibliographystyle{aaai}
 \bibliography{faikrmod3.bib}
-
-
-% \attention{NOTICE: THIS REPORT'S LENGTH MUST NOT EXCEED \textbf{TWO PAGES} PLUS REFERENCES. THIS MAY MEAN THAT YOU WILL HAVE TO LEAVE OUT OF THE REPORT PART OF THE WORK YOU HAVE DONE OR OBSERVATIONS YOU HAVE. THIS IS NORMAL: THE REPORT SHOULD EMPHASIZE WHAT IS MOST SIGNIFICANT, NOTEWORTHY, AND REFER TO THE NOTEBOOK FOR ANYTHING ELSE. FOR ANY OTHER ASPECT OF YOUR WORK THAT YOU WOULD LIKE TO EMPHASIZE BUT CANNOT EXPLAIN HERE FOR LACK OF SPACE, FEEL FREE TO ADD COMMENTS IN THE NOTEBOOK.}
 
 
 \end{document}

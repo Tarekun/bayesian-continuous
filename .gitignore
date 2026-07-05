@@ -9,3 +9,5 @@ uv.lock
 datasets
 report/main.aux
 report/main.log
+report/main.bbl
+report/main.blg
