@@ -33,21 +33,13 @@ danieletarek.iaisy@studio.unibo.it
 
 \begin{abstract}
 \begin{quote}
-Learning the structure of a Bayesian Network, represented as a Directed Acyclic Graph (DAG),
-is a computationally challenging task due to the combinatorial nature of the search space
-and strict acyclicity constraints. Continuous numerical optimization has emerged as a
-promising alternative to traditional combinatorial search methods. This study investigates
-and compares novel continuous optimization techniques, specifically NOTEARS and DAG-GNN,
-against classical algorithms (PC, FGES, and Hill Climbing) in terms of structural fidelity
-and computational efficiency. We evaluated these algorithms on synthetic datasets of
-varying complexities (ranging from 5 to 37 nodes) and a real-world biological dataset.
-Our results reveal a distinct trade-off between the approaches: continuous methods,
-yield lower Structural Hamming Distances (SHD) as network complexity grows and scale well
-with the number of variables. In contrast, classical algorithms demonstrate superior 
-scalability concerning dataset size but suffer from computational bottlenecks on larger
-networks. Notably, despite its architectural suitability for graph-structured data, DAG-GNN
-underperformed compared to the simpler NOTEARS baseline while requiring significantly higher
-computational resources.
+Learning Bayesian Network (DAG) structures is computationally challenging due to acyclicity
+constraints. We compare continuous optimization methods (NOTEARS, DAG-GNN) against classical
+algorithms (PC, FGES, Hill Climbing) using synthetic (5-37 nodes) and real-world biological
+datasets. Results reveal a distinct trade-off: continuous methods scale better with network
+complexity, achieving lower Structural Hamming Distances, whereas classical algorithms scale
+better with dataset size but bottleneck on large networks. Notably, the graph-based DAG-GNN
+underperformed the simpler NOTEARS baseline in both accuracy and efficiency.
 \end{quote}
 \end{abstract}
 
@@ -157,55 +149,27 @@ tested networks it was able to outperform NOTEARS, despites still beating classi
 except for the simplest case of the CANCER dataset. It is still believable that it could beat
 NOTEARS as the network becomes bigger and the relationships between variables more complex, but this
 investigation is left as future work.\\
-Table 1 contains the performance of each algorithm
-on each dataset, along with averaged metrics across all datasets.
+Table 1 contains the average performance of each algorithm across all datasets.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \footnotesize
-\setlength{\tabcolsep}{5pt}
-\caption{Per-dataset and averaged results for each algorithm. \emph{nSHD} = SHD\,/\,$|E^*|$ (SHD normalised by the number of true edges), making cross-network averages comparable. \emph{Accuracy} = TP\,/\,(TP\,+\,FP\,+\,FN\,+\,rev.). FGES was not run on ALARM; its average excludes that network.}
+\setlength{\tabcolsep}{4pt}
+\caption{Results for each algorithm averaged across all four datasets (Sachs, Cancer, Child, Alarm). \emph{nSHD} = SHD\,/\,$|E^*|$ (SHD normalised by the number of true edges), making cross-network averages comparable. \emph{Acc.} = TP\,/\,(TP\,+\,FP\,+\,FN\,+\,rev.). FGES was not run on ALARM; its average excludes that network.}
 \label{tab:results}
-\begin{tabular}{llrrrrrrrr}
+\vspace{4pt}
+\begin{tabular}{lrrrrrr}
 \toprule
-Dataset & Algorithm & Time (s) & SHD & nSHD & Accuracy & Precision & Recall & F1 \\
+Algorithm & Time (s) & nSHD & Acc. & Prec. & Rec. & F1 \\
 \midrule
-\multirow{5}{*}{Sachs}
-  & NOTEARS  & 112.80  & 20 & 1.000 & 0.200 & 0.385 & 0.250 & 0.303 \\
-  & DAG-GNN  & 1585.98 & 22 & 1.100 & 0.000 & 0.000 & 0.000 & 0.000 \\
-  & HC       &    5.00 & 37 & 1.850 & 0.098 & 0.121 & 0.200 & 0.151 \\
-  & PC       &    6.38 & 30 & 1.500 & 0.189 & 0.250 & 0.304 & 0.275 \\
-  & FGES     &    2.32 & 26 & 1.300 & 0.235 & 0.364 & 0.286 & 0.320 \\
-\midrule
-\multirow{5}{*}{Cancer}
-  & NOTEARS  &   0.07 &  4 & 1.000 & 0.200 & 0.500 & 0.200 & 0.286 \\
-  & DAG-GNN  &  83.63 &  4 & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\
-  & HC       &   0.19 &  3 & 0.750 & 0.250 & 0.250 & 0.250 & 0.250 \\
-  & PC       &   0.05 &  2 & 0.500 & 0.500 & 0.667 & 0.500 & 0.571 \\
-  & FGES     &   0.09 &  1 & 0.250 & 0.750 & 0.750 & 0.750 & 0.750 \\
-\midrule
-\multirow{5}{*}{Child}
-  & NOTEARS  &   5.84 & 22 & 0.880 & 0.185 & 0.333 & 0.200 & 0.250 \\
-  & DAG-GNN  & 100.21 & 24 & 0.960 & 0.172 & 0.294 & 0.200 & 0.238 \\
-  & HC       &   6.02 & 30 & 1.200 & 0.231 & 0.265 & 0.360 & 0.305 \\
-  & PC       &   1.73 & 27 & 1.080 & 0.289 & 0.344 & 0.379 & 0.361 \\
-  & FGES     &   8.58 & 27 & 1.080 & 0.372 & 0.421 & 0.533 & 0.471 \\
-\midrule
-\multirow{4}{*}{Alarm}
-  & NOTEARS  &  58.17 & 34 & 0.739 & 0.414 & 0.585 & 0.522 & 0.552 \\
-  & DAG-GNN  & 306.54 & 42 & 0.913 & 0.276 & 0.485 & 0.348 & 0.405 \\
-  & HC       &  27.28 & 61 & 1.326 & 0.282 & 0.312 & 0.522 & 0.390 \\
-  & PC       &   4.50 & 29 & 0.630 & 0.517 & 0.646 & 0.585 & 0.614 \\
-\midrule
-\multirow{5}{*}{Average}
-  & NOTEARS  &  44.22 & -- & 0.905 & 0.250 & 0.451 & 0.293 & 0.348 \\
-  & DAG-GNN  & 519.09 & -- & 0.993 & 0.112 & 0.195 & 0.137 & 0.161 \\
-  & HC       &   9.62 & -- & 1.282 & 0.215 & 0.237 & 0.333 & 0.274 \\
-  & PC       &   3.17 & -- & 0.928 & 0.374 & 0.477 & 0.442 & 0.455 \\
-  & FGES     &   3.66 & -- & 0.877 & 0.452 & 0.512 & 0.523 & 0.514 \\
+NOTEARS &  44.22 & 0.905 & 0.250 & 0.451 & 0.293 & 0.348 \\
+DAG-GNN & 519.09 & 0.993 & 0.112 & 0.195 & 0.137 & 0.161 \\
+HC      &   9.62 & 1.282 & 0.215 & 0.237 & 0.333 & 0.274 \\
+PC      &   3.17 & 0.928 & 0.374 & 0.477 & 0.442 & 0.455 \\
+FGES    &   3.66 & 0.877 & 0.452 & 0.512 & 0.523 & 0.514 \\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 
 \section{Conclusion}
