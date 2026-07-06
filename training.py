@@ -126,7 +126,7 @@ def train_daggnn(
     lr: float = 0.003,  # learning reate
     h_tolerance: float = 1e-8,  # tolerance to keep an edge
     seed: int = 42,
-    graph_threshold: float = 0.3,
+    graph_threshold: float = 0.0,  # library default was 0.3
     tau_a: float = 0,
     k_max_iter: float = 100,
 ) -> TrainingResult:

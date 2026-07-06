@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import networkx as nx
+import textwrap
 
 # performance metrics for which the value is better when its lower
 LOWER_IS_BETTER = {"shd"}
@@ -6,14 +8,61 @@ LOWER_IS_BETTER = {"shd"}
 METRIC_COLUMNS = {
     "n_learned",
     "shd",
+    "shd_normalized",
     "precision",
     "recall",
     "f1",
+    "accuracy",
     "tp",
     "fp",
     "fn",
     "reversed",
 }
+
+
+def plot_dag(dag: nx.DiGraph, title: str = "DAG") -> None:
+    """Draw a DAG as an interactive pyvis graph rendered inline in Jupyter."""
+    if not isinstance(dag, nx.DiGraph):
+        new_dag = nx.DiGraph()
+        new_dag.add_edges_from(dag)
+        dag = new_dag
+    pos = nx.nx_agraph.graphviz_layout(dag, prog="dot")
+    labels = {n: textwrap.fill(str(n), width=11) for n in dag.nodes()}
+
+    fig, ax = plt.subplots(figsize=(16, 10))
+    nx.draw_networkx_edges(
+        dag,
+        pos,
+        ax=ax,
+        arrowstyle="-|>",
+        arrowsize=13,
+        width=1.1,
+        edge_color="#666666",
+        connectionstyle="arc3,rad=0.06",
+        min_source_margin=16,
+        min_target_margin=24,
+    )
+    nx.draw_networkx_labels(
+        dag,
+        pos,
+        labels=labels,
+        ax=ax,
+        font_size=9,
+        font_weight="bold",
+        font_color="#10323a",
+        bbox=dict(
+            boxstyle="round,pad=0.45",
+            facecolor="#bfe3ef",
+            edgecolor="#2b6777",
+            linewidth=1.3,
+        ),
+    )
+
+    ax.set_title(title, fontsize=15, fontweight="bold")
+    ax.margins(0.12)
+    ax.axis("off")
+    fig.tight_layout()
+    plt.show()
 
 
 def graph_metrics(true_edges: set, learned_edges: set) -> dict:
@@ -30,6 +79,7 @@ def graph_metrics(true_edges: set, learned_edges: set) -> dict:
     rev = len(reversed_edges)
 
     shd = fp + fn + rev
+    shd_normalized = shd / len(true_edges) if len(true_edges) > 0 else 0.0
     precision = tp / (tp + fp + rev) if (tp + fp + rev) > 0 else 0.0
     recall = tp / (tp + fn + rev) if (tp + fn + rev) > 0 else 0.0
     f1 = (
@@ -37,9 +87,14 @@ def graph_metrics(true_edges: set, learned_edges: set) -> dict:
         if (precision + recall) > 0
         else 0.0
     )
+    # no true-negative notion without the full node-pair space, so accuracy is
+    # the share of correctly recovered edges among all edges either true or learned
+    accuracy = tp / (tp + fp + fn + rev) if (tp + fp + fn + rev) > 0 else 0.0
 
     return {
         "shd": shd,
+        "shd_normalized": shd_normalized,
+        "accuracy": accuracy,
         "precision": precision,
         "recall": recall,
         "f1": f1,
