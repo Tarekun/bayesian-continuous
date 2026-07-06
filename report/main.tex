@@ -1,0 +1,182 @@
+%File: formatting-instruction.tex
+\documentclass[letterpaper]{article}
+\usepackage{url,graphicx,xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{times}
+\usepackage{helvet}
+\usepackage{courier}
+\usepackage[guidelines]{faikrmod3}
+% \usepackage[]{faikrmod3} % without guidelines
+\let\savedcite\cite
+\usepackage[hidelinks]{hyperref}
+\let\cite\savedcite
+\frenchspacing
+\setlength{\pdfpagewidth}{8.5in}
+\setlength{\pdfpageheight}{11in}
+
+
+
+% THE \pdfinfo /Title AND /Author ARE NOT NECESSARY, THEY ARE METADATA FOR THE FINAL PDF FILE
+\pdfinfo{
+/Title (Insert Your Title Here)
+/Author (Put All Your Authors Here, Separated by Commas)}
+\setcounter{secnumdepth}{0}  
+ \begin{document}
+% The file aaai.sty is the style file for AAAI Press 
+% proceedings, working notes, and technical reports.
+%
+\title{Benchmarking continuous optimization techniques for DAG learning}
+\author{Daniele Tarek Iaisy\\
+Master's Degree in Artificial Intelligence, University of Bologna\\
+danieletarek.iaisy@studio.unibo.it
+}
+\maketitle
+
+
+\begin{abstract}
+\begin{quote}
+Learning Bayesian Network (DAG) structures is computationally challenging due to acyclicity
+constraints. We compare continuous optimization methods (NOTEARS, DAG-GNN) against classical
+algorithms (PC, FGES, Hill Climbing) using synthetic (5-37 nodes) and real-world biological
+datasets. Results reveal a distinct trade-off: continuous methods scale better with network
+complexity, achieving lower Structural Hamming Distances, whereas classical algorithms scale
+better with dataset size but bottleneck on large networks. Notably, the graph-based DAG-GNN
+underperformed the simpler NOTEARS baseline in both accuracy and efficiency.
+\end{quote}
+\end{abstract}
+
+
+\section{Introduction}
+
+\subsection{Domain}
+Learning a Bayesian Network from data can be a difficult task. The space of DAGs over a set of 
+nodes is a combinatorial space and traditional approaches have a super-exponential worst case
+complexity, mainly owed to the aciclicity constraint to be enforced on the learned DAG.
+Continuous numerical optimization techniques can be a viable option to speed up the search.
+
+\subsection{Aim}
+The objective of this study is to evaluate the performance of numerical optimization 
+algorithms, compared to a baseline of classical algorithm such as PC \cite{spirtes1991pc},
+FGES \cite{ramsey2017fges}, and hill climbing \cite{heckerman1995learning}.
+We seek to understand how good the reconstructed DAG is and the compute resources needed to 
+reconstruct it. We also want to understand the scaling of these resources as the number of 
+variables grows or the number of data points grows.
+
+\subsection{Method}
+The bnlearn repository contains a repository of
+prebuilt Bayesian networks that can be used to generate a synthetic dataset, with DAGs ranging from
+just 5 variables to 1041. We selected 3 of them in the range of variables 5-37.
+To avoid only using synthetic data we also tested on the protein signaling
+work introduced in \cite{sachs2005causal} which contains a know ground truth DAG with 11 nodes and a dataset of
+11672 real samples. The full experiment covers 4 networks with node count ranging from 5 to 37.\\
+We investigate the NOTEARS algorithm \cite{zheng2018dags} and the DAG-GNN algorithm
+\cite{yu2019daggnn}. NOTEARS was the first work to transform DAG structure learning
+from a combinatorial search into a continuous optimization problem,
+by introducing a algebraic characterization of the acyclicity constraint 
+which allows the network structure to be estimated using black-box
+numerical solvers. DAG-GNN was then chosen as an extension. It works by employing
+a GNN-parameterized Variational Autoencoder (VAE) to capture the underlying data distribution,
+which seemed a natural fit to learn the DAG structure of the probability distribution.\\
+For each experiment, we track Structural Hamming Distance (SHD) between the ground truth DAG
+and the reconstructed one together with the execution time of the algorithm.\\
+
+\subsection{Results}
+NOTEARS achieved the highest overall performance recovering the best DAGs among all of the tested
+algorithms. DAG-GNN performed worse than NOTEARS, while being much more costly to run.
+These approaches are not significantly affected by an increase in variable count,
+while being much more sensitive to sample count in the 
+dataset used, a limitation not observed in classical methods.
+
+
+\section{Model}
+Many of the Bayesian network tested for this study come from the bnlearn repository of networks.
+Specifically, we used the CANCER composed of 5 variables, the CHILD composed of 20 variables,
+and the ALARM one composed of 37 variables. All of these network include discrete variables
+only. For more details on the networks we refer the reader to the bnlearn repository.\\
+In addition to these discrete benchmarks, we evaluate algorithms on a real-world continuous
+dataset introduced by \cite{sachs2005causal}, derived from single-cell flow 
+cytometry measurements. The ground truth network consists of 11 continuous variables 
+representing signaling proteins.
+
+
+\section{Analysis}
+
+\subsection{Experimental setup}
+NOTEARS, DAG-GNN, and FGES are run using the implementations provided by the gCastle
+Python toolbox, while PC and Hill Climbing are run using the
+implementations provided by the pgmpy library.\\
+Each algorithm has its own
+hyper-parameters so first we run a hyper-parameter grid search over each dataset for each algorithm
+to derive good hyper-parameter values for each dataset-algorithm combination.\\
+Then, we execute the algorithm on each dataset and compare the learned DAG against the ground-truth one
+computing graph reconstruction metrics, along with execution time of the algorithm. The most important 
+metric is SHD, which measures how many edge additions, deletions, or
+inversions need to be performed on a graph to transform it into the other (lower means better).\\
+For all the networks from the bnlearn repository we generated a
+synthetic dataset of 1000 samples, while for the dataset from \cite{sachs2005causal} we used
+all 11672 samples as a higher data regime.\\
+Experiment code is available on Github.\footnote{\url{https://github.com/Tarekun/bayesian-continuous}}
+
+\subsection{Results}
+On the very small CANCER network NOTEARS and DAG-GNN do not appear to be helpful compared to classical
+algorithms as they both recover DAGs with worse SHD than other methods achieved, where fGES is
+the clear winner.
+As the number of nodes increases, NOTEARS starts showing an edge, achieving lower SHD than any other 
+method. Notably, DAG-GNN does somewhat better than
+classical algorithms, but does not beat NOTEARS. It is still believable that it could beat
+NOTEARS as the network becomes bigger and the relationships between variables more complex, but this
+investigation is left as future work. Finally we note that on the biggest network PC was the winner,
+beating NOTEARS by 5 points.\\
+For execution time, we observe that all algorithms take longer with more variables introduced
+in the network, with PC being the main reason the size of the network was capped around ~40 (bigger
+networks caused it to take prohibitively long).
+On the other hand, their scaling w.r.t. the dataset size is much less favourable for numerical algorithms:
+Hill climbing, PC, and FGES all take roughly the same amount of time on 
+the Sachs et al. dataset that it took them on
+the CHILD one; NOTEARS instead took roughly 20 times more time to terminate and DAG-GNN took 16 times.\\
+Table 1 contains the performance of each algorithm across all datasets.
+
+\begin{table}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{5pt}
+\caption{nSHD is the average "scale normalized" SHD, the SHD divided by the number of edges in the original DAG}
+\label{tab:results}
+\vspace{4pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+Algorithm & Time (s) & nSHD & Cancer & Sachs & Child & Alarm \\
+\midrule
+NOTEARS &  57.27 & 0.90 &  4 & 18 & 21 & 34 \\
+DAG-GNN & 450.88 & 1.00 &  3 & 27 & 24 & 42 \\
+HC      &  10.37 & 1.30 &  3 & 37 & 30 & 61 \\
+PC      &   2.99 & 0.90 &  2 & 30 & 26 & 29 \\
+FGES    &  30.87 & 1.00 &  1 & 26 & 27 & 54 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\section{Conclusion}
+In conclusion, this study reveals a trade-off:
+continuous methods yield better structural accuracy for complex networks, while classical
+algorithms scale better with larger datasets. Surprisingly, DAG-GNN 
+underperformed against simpler baselines. Current limitations
+include classical bottlenecks on very large networks and continuous solvers' sensitivity to large
+samples. Future work should address these issues by optimizing continuous methods for larger
+datasets and evaluating advanced models on more complex graphs. 
+
+
+\section{Links to external resources}
+\begin{itemize}
+    \item pgmpy library: \url{https://pgmpy.org/index.html}
+    \item gCastle library: \url{https://github.com/huawei-noah/trustworthyAI/blob/master/gcastle/README.md}
+    \item bnlearn repository: \url{https://www.bnlearn.com/bnrepository/}
+\end{itemize}
+
+\bibliographystyle{aaai}
+\bibliography{faikrmod3.bib}
+
+
+\end{document}

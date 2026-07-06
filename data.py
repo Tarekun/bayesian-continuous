@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 from typing import Literal
+from pgmpy.readwrite import BIFReader
+from pgmpy.sampling import BayesianModelSampling
 
 SupportedDistribution = Literal["gaussian"]
 
@@ -111,19 +113,70 @@ def _sample_from_dag(
 _SACHS_DIR = Path(__file__).parent / "datasets" / "sachs"
 
 
-def load_sachs_data() -> pd.DataFrame:
-    """Load the Sachs et al. (2005) protein signaling dataset."""
+def load_sachs() -> tuple[pd.DataFrame, nx.DiGraph]:
+    """Load the Sachs et al. (2005) protein signaling dataset and GT graph"""
 
+    # dataset loading
     data_dir = _SACHS_DIR / "Data Files"
     frames = [pd.read_csv(f) for f in sorted(data_dir.glob("*.csv"))]
-    return pd.concat(frames, ignore_index=True)
-
-
-def load_sachs_ground_truth() -> nx.DiGraph:
-    """Load the Sachs et al. (2005) ground-truth causal network."""
-
+    df = pd.concat(frames, ignore_index=True)
+    # graph loading
     gt_df = pd.read_csv(_SACHS_DIR / "GroundTruth.csv")
     dag = nx.DiGraph()
     for _, row in gt_df.iterrows():
         dag.add_edge(row["from"], row["to"])
-    return dag
+
+    return df, dag
+
+
+def _encode_categorical(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert string/categorical columns to integer codes."""
+    return df.apply(
+        lambda col: (
+            pd.Categorical(col).codes.astype(float)
+            if not pd.api.types.is_numeric_dtype(col)
+            else col
+        )
+    )
+
+
+def load_cancer(n_samples: int, seed: int) -> tuple[pd.DataFrame, nx.DiGraph]:
+    """Load the Cancer BIF model and sample a dataset from it"""
+
+    model = BIFReader("datasets/bnlearn/cancer.bif").get_model()
+    df = BayesianModelSampling(model).forward_sample(size=n_samples, seed=seed)
+    df = _encode_categorical(df)
+
+    dag = nx.DiGraph()
+    dag.add_nodes_from(model.nodes())
+    dag.add_edges_from(model.edges())
+
+    return df, dag
+
+
+def load_child(n_samples: int, seed: int) -> tuple[pd.DataFrame, nx.DiGraph]:
+    """Load the Child BIF model and sample a dataset from it"""
+
+    model = BIFReader("datasets/bnlearn/child.bif").get_model()
+    df = BayesianModelSampling(model).forward_sample(size=n_samples, seed=seed)
+    df = _encode_categorical(df)
+
+    dag = nx.DiGraph()
+    dag.add_nodes_from(model.nodes())
+    dag.add_edges_from(model.edges())
+
+    return df, dag
+
+
+def load_alarm(n_samples: int, seed: int) -> tuple[pd.DataFrame, nx.DiGraph]:
+    """Load the ALARM model and sample a dataset from it"""
+
+    model = BIFReader("datasets/bnlearn/alarm.bif").get_model()
+    df = BayesianModelSampling(model).forward_sample(size=n_samples, seed=seed)
+    df = _encode_categorical(df)
+
+    dag = nx.DiGraph()
+    dag.add_nodes_from(model.nodes())
+    dag.add_edges_from(model.edges())
+
+    return df, dag
