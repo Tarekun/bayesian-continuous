@@ -11,3 +11,12 @@ report/main.aux
 report/main.log
 report/main.bbl
 report/main.blg
+
+slides/main.aux
+slides/main.out
+slides/main.log
+slides/main.bbl
+slides/main.blg
+slides/main.nav
+slides/main.snm
+slides/main.toc
